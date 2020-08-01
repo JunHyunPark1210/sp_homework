@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Webpage Title -->
+    <title>짭짤한맛의 쇼핑몰</title>
+
+    <!-- Required meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!-- JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+
+    <!-- 구글폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Single+Day&display=swap" rel="stylesheet">
+<!--    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">-->
+
+    <style type="text/css">
+        * {
+            font-family: 'Single Day', cursive;
+        }
+
+        .wrap {
+            width: 500px;
+            margin: auto;
+        }
+
+        .img {
+            background-image: url('https://contents.sixshop.com/thumbnails/uploadedFiles/13832/product/image_1556091019738_750.jpg');
+            background-size: cover;
+            background-position: center;
+            width: 500px;
+            height: 300px;
+        }
+
+        .info {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1, h5 {
+            display: inline;
+        }
+
+        .order {
+            text-align: center;
+        }
+
+        .orders {
+            margin-top: 100px;
+        }
+
+        h4 {
+            color: blue;
+        }
+
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            // 창을 새로고침할 때마다 실행할 함수를 여기에 입력합니다.
+            // $('#ExchangeRate').empty();
+            $("#orders-box").html("");
+            $.ajax({
+                type: "GET",
+                url: "https://api.manana.kr/exchange/rate.json",
+                data: {},
+                success: function (response) {
+                    let rate = response
+                    let tempHtml = '';
+                    // let rate = response["rentBikeStatus"]["row"];
+                    for (let i = 0; i < rate.length; i++) {
+                        // let rackName = rows[i]['stationName'];
+                        let usName = rate[i]['name']
+
+                        if (usName == "USDKRW=X") {
+                            let usRate = rate[i]['rate']
+                            $('#ExchangeRate').append(usRate);
+
+                            // tempHtml = `<span> usRate </span>`
+                        }
+                    }
+                }
+            })
+
+            view_orders();
+
+        });
+        let ordName = ""
+        let ordCount = ""
+        let ordAddr = ""
+        let ordPhone = ""
+        let passRule = /^010-(?:\d{4})-\d{4}$/;
+
+        function view_orders() {
+            $.ajax({
+                type: "GET",
+                url: "/order",
+                data: {},
+                success: function (response) {
+                    let orders = response["orders"];
+                    for (let i = 0; i < orders.length; i++) {
+                        row_add(orders[i]["name"], orders[i]["count"], orders[i]["addr"], orders[i]["phone"])
+                    }
+                }
+            })
+        }
+
+        function postorders() {
+            // let ordName = $('#order-name').val();
+            // let ordCount = $('#order-count').val();
+            // let ordAddr = $('#order-address').val();
+            // let ordPhone = $('#order-phone').val();
+            ordName = document.querySelector('#order-name').value
+            ordCount = document.querySelector('#order-count').value
+            ordAddr = document.querySelector('#order-address').value
+            ordPhone = document.querySelector('#order-phone').value
+
+            $.ajax({
+                type: "POST", // POST 방식으로 요청하겠다.
+                url: "/order", // /memo라는 url에 요청하겠다.
+                data: {name: ordName, count: ordCount, addr: ordAddr, phone: ordPhone}, // 데이터를 주는 방법
+                success: function (response) { // 성공하면
+                    if (response["result"] == "success") {
+                        order()
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("서버 오류!")
+                    }
+                }
+            })
+
+
+        }
+
+
+        function order() {
+            $('#order-name').val('');
+            $('#order-count').val('');
+            $('#order-address').val('');
+            $('#order-phone').val('');
+            alert(ordName+ ' / ' + ordCount+ ' / ' + ordAddr+ ' / ' + ordPhone + '의 정보로 주문이 완료되었습니다.');
+        }
+
+        function failedOrderbyName() {
+            alert('주문자 정보가 입력되지 않았습니다.')
+            $('#order-name').focus()
+        }
+        function failedOrderbyCount() {
+            alert('주문 수량 정보가 선택되지 않았습니다.')
+            $('#order-count').focus()
+        }
+        function failedOrderbyAddress() {
+            alert('주소지 정보가 입력되지 않았습니다.')
+            $('#order-address').focus()
+        }
+        function failedOrderbyPhone() {
+            alert('연락처 정보가 입력되지 않았습니다.')
+            $('#order-phone').focus()
+        }
+
+        function failedOrderbyPhone2() {
+            alert("'010-xxxx-xxxx' 형식에 맞게 입력하세요.")
+            $('#order-phone').focus()
+        }
+
+
+        // function  row_add() {
+        //     var objRow;
+        //     objRow = document.all["orders-box"].insertRow();
+        //
+        //     var objCell_Id = objRow.insertCell();
+        //     objCell_Id.innerHTML = "<input type='text' value=''/>"
+        //
+        // }
+
+        function orderCheck() {
+
+            if (document.querySelector('#order-name').value === '') {
+                failedOrderbyName()
+            } else if (document.querySelector('#order-count').value === '') {
+                failedOrderbyCount()
+            } else if (document.querySelector('#order-address').value === '') {
+                failedOrderbyAddress()
+            } else if (document.querySelector('#order-phone').value === '') {
+                failedOrderbyPhone()
+
+            } else {
+                ordName = document.querySelector('#order-name').value
+                ordCount = document.querySelector('#order-count').value
+                ordAddr = document.querySelector('#order-address').value
+                ordPhone = document.querySelector('#order-phone').value
+
+                if(!passRule.test(ordPhone)){
+                    failedOrderbyPhone2()
+                }
+
+                // if (ordPhone !== /^010-(?:\d{3}|\d{4})-\d{4}$/) {
+                //     failedOrderbyPhone2()
+                // }
+                else {
+                    // order()
+                    // row_add()
+                    postorders()
+                }
+            }
+
+            // } else if (ordPhone[1].length !== 4) {
+            //     failedOrderbyPhone2()
+            // } else if (ordPhone[2].length !== 4) {
+            //     failedOrderbyPhone2()
+
+        }
+
+        function row_add(name, count, addr, phone) {
+
+            var my_tbody = document.getElementById('orders-box');
+            // var row = my_tbody.insertRow(0); // 상단에 추가
+            var row = my_tbody.insertRow(my_tbody.rows.length); // 하단에 추가
+            var cell1 = row.insertCell(0);
+            var cell2 = row.insertCell(1);
+            var cell3 = row.insertCell(2);
+            var cell4 = row.insertCell(3);
+
+            // cell1.innerHTML = "<td> ($ordName) </td>";
+            cell1.innerHTML = name
+            cell2.innerHTML = count
+            cell3.innerHTML = addr
+            cell4.innerHTML = phone
+
+            // $('#order-name').val = ''
+
+        }
+
+
+        // function row_add() {
+        //
+        //     var my_tbody = document.getElementById('orders-box');
+        //     // var row = my_tbody.insertRow(0); // 상단에 추가
+        //     var row = my_tbody.insertRow(my_tbody.rows.length); // 하단에 추가
+        //     var cell1 = row.insertCell(0);
+        //     var cell2 = row.insertCell(1);
+        //     var cell3 = row.insertCell(2);
+        //     var cell4 = row.insertCell(3);
+        //
+        //     // cell1.innerHTML = "<td> ($ordName) </td>";
+        //     cell1.innerHTML = ordName
+        //     cell2.innerHTML = ordCount
+        //     cell3.innerHTML = ordAddr
+        //     cell4.innerHTML = ordPhone
+        //
+        //     $('#order-name').val = ''
+        //
+        // }
+
+    </script>
+</head>
+<body>
+<div class="wrap">
+    <h1>원터치 슈프림 텐트</h1>
+    <div class="img"></div>
+    <div class="info">
+
+        <h3>가격: 76,000원/개</h3>
+        <p>방수잘되는 간편한 원터치 텐트 저렴한 가격에 판매합니다</p>
+        <p> <h4 id="ExchangeRate"> 달러-원 환율: </h4> </p>
+    </div>
+
+    <div class="info">
+        <form id="reset_form">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="oName">주문자 이름</span>
+                </div>
+                <input type="text" class="form-control" id="order-name" aria-describedby="basic-addon3" value="">
+            </div>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <label class="input-group-text" for="inputGroupSelect01">수량</label>
+                </div>
+                <select class="custom-select" id="order-count">
+                    <option selected value=""> -- 수량을 선택하세요 --</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="oAddress">주소</span>
+                </div>
+                <input type="text" class="form-control" id="order-address" aria-describedby="basic-addon3">
+            </div>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="oNunmber">전화번호</span>
+                </div>
+                <input type="text" class="form-control" id="order-phone" aria-describedby="basic-addon3">
+            </div>
+
+            <div class="order">
+                <button onclick=orderCheck() type="button" class="btn btn-primary">주문하기
+<!--                <button onclick=orderCheck() type="reset" class="btn btn-primary">주문하기-->
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="orders">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">이름</th>
+                <th scope="col">수량</th>
+                <th scope="col">주소</th>
+                <th scope="col">전화번호</th>
+            </tr>
+            </thead>
+            <tbody id="orders-box">
+            <tr>
+                <td>박르탄</td>
+                <td>2</td>
+                <td>르탄시 코딩구 열심동</td>
+                <td>010-1234-5678</td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
